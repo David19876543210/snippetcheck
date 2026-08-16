@@ -1,6 +1,6 @@
 import pc from "picocolors";
 import { FINDING_KINDS, SKIP_REASONS } from "./types.js";
-import type { CheckResult, Finding, FindingKind, SkipReason, SkippedSnippet } from "./types.js";
+import type { CheckResult, Finding, FindingKind, RawDiagnostic, SkipReason, SkippedSnippet } from "./types.js";
 
 // Derived from the enums themselves, not a hand-picked constant — so a future
 // member longer than today's longest can never silently collapse a column's
@@ -64,6 +64,26 @@ function renderVerboseSkipped(skipped: SkippedSnippet[]): string[] {
   return lines;
 }
 
+function renderUnfiltered(diagnostics: RawDiagnostic[]): string[] {
+  const lines: string[] = [];
+  const byCode = new Map<number, RawDiagnostic[]>();
+  for (const d of diagnostics) {
+    const list = byCode.get(d.code) ?? [];
+    list.push(d);
+    byCode.set(d.code, list);
+  }
+
+  lines.push("");
+  lines.push(pc.dim(`Unfiltered: ${diagnostics.length} diagnostic${diagnostics.length === 1 ? "" : "s"} outside the allowlist.`));
+  for (const [code, occurrences] of [...byCode.entries()].sort((a, b) => b[1].length - a[1].length)) {
+    const example = occurrences[0];
+    lines.push(
+      `  ${pc.yellow(`TS${code}`)} x${occurrences.length}  ${pc.dim(`${example.source}:L${example.line}`)}  ${example.message}`,
+    );
+  }
+  return lines;
+}
+
 export interface RenderOptions {
   verbose?: boolean;
 }
@@ -110,7 +130,18 @@ export function renderHuman(result: CheckResult, options: RenderOptions = {}): s
     }
   }
 
-  if (result.findings.length === 0) {
+  if (result.noTypeDeclarations) {
+    // Deliberately not "No broken samples found." — with zero type declarations,
+    // every sample checked as untyped `any`. Nothing was ever measured.
+    const dtNote = result.definitelyTypedAvailable
+      ? `@types/${result.packageName} exists but is not installed automatically`
+      : "no @types/ package exists for it either";
+    lines.push(
+      pc.yellow(
+        `${result.packageName}@${result.packageVersion} ships no type declarations — nothing could be checked (${dtNote}).`,
+      ),
+    );
+  } else if (result.findings.length === 0) {
     lines.push(pc.green("No broken samples found."));
   } else {
     const docCount = bySource.size;
@@ -132,6 +163,10 @@ export function renderHuman(result: CheckResult, options: RenderOptions = {}): s
     lines.push("");
     lines.push(pc.dim("Skipped snippets:"));
     lines.push(...renderVerboseSkipped(result.skipped));
+  }
+
+  if (result.unfilteredDiagnostics && result.unfilteredDiagnostics.length > 0) {
+    lines.push(...renderUnfiltered(result.unfilteredDiagnostics));
   }
 
   return lines.join("\n");

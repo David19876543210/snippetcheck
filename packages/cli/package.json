@@ -14,7 +14,7 @@
   },
   "type": "module",
   "bin": {
-    "snippetcheck": "./dist/cli.js"
+    "snippetcheck": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,7 +28,8 @@
     "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
     "dev": "tsx src/cli.ts",
     "test": "node --import tsx --test test/*.test.ts",
-    "lint": "tsc -p tsconfig.json --noEmit"
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "fast-glob": "^3.3.2",

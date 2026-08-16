@@ -11,6 +11,8 @@ export interface RunCheckOptions {
   maxSnippets: number;
   includeJs: boolean;
   includeHistorical: boolean;
+  /** See CheckOptions.unfiltered / CheckResult.unfilteredDiagnostics. */
+  unfiltered?: boolean;
 }
 
 interface ResolvedDoc {
@@ -92,6 +94,7 @@ export async function runCheck(sources: string[], options: RunCheckOptions): Pro
       packageName: workspace.packageName,
       workspaceRoot: workspace.root,
       includeJs: options.includeJs,
+      unfiltered: options.unfiltered,
     });
 
     const result: CheckResult = {
@@ -103,6 +106,9 @@ export async function runCheck(sources: string[], options: RunCheckOptions): Pro
       snippetsChecked: checkResult.checked,
       skipped: [...extractSkipped, ...checkResult.skipped],
       findings: checkResult.findings,
+      noTypeDeclarations: !workspace.hasTypeDeclarations,
+      definitelyTypedAvailable: workspace.definitelyTypedAvailable,
+      ...(options.unfiltered ? { unfilteredDiagnostics: checkResult.unfiltered } : {}),
     };
 
     return result;

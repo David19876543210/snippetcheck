@@ -51,6 +51,8 @@ export function makeResult(overrides: Partial<CheckResult> = {}): CheckResult {
     snippetsChecked: 1,
     skipped: [],
     findings: [],
+    noTypeDeclarations: false,
+    definitelyTypedAvailable: false,
     ...overrides,
   };
 }

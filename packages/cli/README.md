@@ -16,6 +16,11 @@ real breaks. When in doubt, snippetcheck stays silent and counts the snippet as
 skipped — it never guesses, and it never reports a diagnostic it can't trace back to
 the target package's own type declarations.
 
+**Status: early.** `0.1.0`, first publish. The allowlist covers nine TypeScript
+diagnostic codes found by hand against real packages, not a general-purpose
+checker — see [What this does not do](#what-this-does-not-do).
+[Issues welcome](https://github.com/David19876543210/snippetcheck/issues).
+
 ## Install
 
 ```sh
@@ -143,6 +148,7 @@ which are the fastest way to scan an entire docs site in one request.
 | `--include-js` | Also check `js`/`jsx` blocks via `checkJs`. Off by default — JS blocks produce more noise. |
 | `--include-historical` | Also check snippets under migration/upgrade/changelog/deprecated headings. Off by default — see [Historical and before/after content](#historical-and-beforeafter-content). |
 | `--verbose` | Show the skip reason for every skipped snippet. |
+| `--unfiltered` | Debug: also print every semantic diagnostic TypeScript raised on a target-importing snippet whose code isn't in the allowlist — useful for finding the allowlist's next candidate code on a new package. Never affects findings or exit code. |
 
 ## Exit codes
 
@@ -198,6 +204,20 @@ By default, snippetcheck skips two kinds of content rather than risk reporting t
 Both are tracked as their own skip reasons (`historical-section`, `before-example`)
 in `--verbose` output and the JSON report, so you can see exactly how much content
 was excluded and why.
+
+## Packages with no type declarations
+
+Some packages ship no `types`/`typings` field, no `types` condition in their
+exports map, and no bundled `index.d.ts` — every import from them resolves to
+`any`, so nothing is actually checkable. snippetcheck never installs
+`@types/<pkg>` on your behalf to fill the gap.
+
+This is reported as its own status — `noTypeDeclarations: true` in the JSON
+report, and a distinct yellow line in the human output — never as
+"No broken samples found." Zero findings only means the docs are clean when
+something was actually measured; here, nothing was. If a DefinitelyTyped package
+exists for it anyway, that's noted too (`definitelyTypedAvailable`), purely as
+context for why.
 
 ## What this does not do
 

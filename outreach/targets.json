@@ -1,0 +1,61 @@
+{
+  "$schema": "./targets.schema.json",
+  "shapes": [
+    "default-export",
+    "named-exports-only",
+    "export-equals-call-signature",
+    "subpath-exports",
+    "definitely-typed-only",
+    "no-declarations"
+  ],
+  "targets": [
+    {
+      "package": "zod",
+      "packageSpec": "zod",
+      "docsUrl": "https://zod.dev/llms-full.txt",
+      "shape": "default-export",
+      "shapeNote": "`export default z;` alongside its named exports — a bad named import surfaces as TS2614, not TS2305.",
+      "verifiedAt": "2026-08-16"
+    },
+    {
+      "package": "date-fns",
+      "packageSpec": "date-fns",
+      "docsUrl": "https://date-fns.org/llms.txt",
+      "shape": "named-exports-only",
+      "shapeNote": "No default export at all — a default import surfaces as TS1192, the mirror image of zod's TS2614.",
+      "verifiedAt": "2026-08-16"
+    },
+    {
+      "package": "chalk",
+      "packageSpec": "chalk@4",
+      "docsUrl": "https://raw.githubusercontent.com/chalk/chalk/main/readme.md",
+      "shape": "export-equals-call-signature",
+      "shapeNote": "`export = chalk;` where chalk is `Chalk & ChalkFunction & {...}` — an intersection type with no symbol of its own; a bad property access needs declarationOriginFiles to trace it back. Pinned to v4: v5+ is ESM-only and drops this shape.",
+      "verifiedAt": "2026-08-16"
+    },
+    {
+      "package": "firebase",
+      "packageSpec": "firebase",
+      "docsUrl": "https://raw.githubusercontent.com/firebase/firebase-js-sdk/master/README.md",
+      "shape": "subpath-exports",
+      "shapeNote": "Real usage imports from subpaths (firebase/app, firebase/auth, firebase/firestore, ...), not the package root — importMatchesPackage's startsWith(pkg + \"/\") match is what makes these checkable at all. @sentry/* is the other classic example of this shape.",
+      "verifiedAt": "2026-08-16"
+    },
+    {
+      "package": "lodash",
+      "packageSpec": "lodash",
+      "docsUrl": "https://raw.githubusercontent.com/lodash/lodash/master/README.md",
+      "shape": "definitely-typed-only",
+      "shapeNote": "Ships no types/typings field, no exports-map types condition, no bundled index.d.ts — only @types/lodash provides types, and snippetcheck never auto-installs it. Verified: noTypeDeclarations=true, definitelyTypedAvailable=true.",
+      "verifiedAt": "2026-08-16"
+    },
+    {
+      "package": "vanta",
+      "packageSpec": "vanta",
+      "docsUrl": "https://raw.githubusercontent.com/tengbao/vanta/master/README.md",
+      "shape": "no-declarations",
+      "shapeNote": "No bundled types AND no @types/vanta on the registry — genuinely nothing to check against, distinct from lodash's DefinitelyTyped-covered case. Verified: noTypeDeclarations=true, definitelyTypedAvailable=false. Real, maintained, actively used animated-background library — a legitimate outreach target, not a toy example.",
+      "verifiedAt": "2026-08-16"
+    }
+  ]
+}

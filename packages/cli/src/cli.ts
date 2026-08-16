@@ -20,6 +20,9 @@ Options:
   --include-js           Also check js/jsx blocks via checkJs (off by default)
   --include-historical   Also check migration/changelog/upgrade sections (off by default)
   --verbose              Show the skip reason for every skipped snippet
+  --unfiltered           Debug: also print every semantic diagnostic code TypeScript
+                          raised outside the allowlist, for discovering candidate
+                          codes on new packages. Never affects findings or exit code.
 
 Exit codes:
   0  no findings
@@ -38,6 +41,7 @@ interface ParsedArgs {
   includeJs: boolean;
   includeHistorical: boolean;
   verbose: boolean;
+  unfiltered: boolean;
 }
 
 function parseArgs(argv: string[]): ParsedArgs {
@@ -51,6 +55,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     includeJs: false,
     includeHistorical: false,
     verbose: false,
+    unfiltered: false,
   };
 
   const args = [...argv];
@@ -87,6 +92,9 @@ function parseArgs(argv: string[]): ParsedArgs {
         break;
       case "--verbose":
         result.verbose = true;
+        break;
+      case "--unfiltered":
+        result.unfiltered = true;
         break;
       case "--help":
       case "-h":
@@ -147,6 +155,7 @@ async function main(): Promise<void> {
       maxSnippets: parsed.maxSnippets,
       includeJs: parsed.includeJs,
       includeHistorical: parsed.includeHistorical,
+      unfiltered: parsed.unfiltered,
     });
 
     if (parsed.json) {

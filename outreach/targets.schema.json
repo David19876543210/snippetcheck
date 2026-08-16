@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "snippetcheck outreach targets",
+  "type": "object",
+  "required": ["shapes", "targets"],
+  "properties": {
+    "shapes": {
+      "type": "array",
+      "description": "The full set of structural shapes a target's shape field may name. Every value here must appear on at least one target — that's the actual constraint (see README.md), not enforced by this schema.",
+      "items": { "type": "string" }
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["package", "packageSpec", "docsUrl", "shape", "shapeNote", "verifiedAt"],
+        "properties": {
+          "package": { "type": "string", "description": "The npm package name, unversioned." },
+          "packageSpec": {
+            "type": "string",
+            "description": "Exactly what to pass to `snippetcheck check --package`. Usually equal to `package`; pinned (e.g. `chalk@4`) when the shape depends on a specific major version."
+          },
+          "docsUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "A real, curl-verified HTTPS URL to raw markdown (llms.txt/llms-full.txt preferred over a bare README when the project publishes one)."
+          },
+          "shape": { "type": "string", "description": "One of the values in the top-level shapes array." },
+          "shapeNote": { "type": "string", "description": "Why this target has this shape — what breaks the naive checker if this shape isn't handled." },
+          "verifiedAt": { "type": "string", "format": "date", "description": "When docsUrl was last curl-verified to resolve and the shape claim was last checked against a real install." }
+        }
+      }
+    }
+  }
+}

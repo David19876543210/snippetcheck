@@ -18,3 +18,26 @@ describe("renderHuman: the line-number column never collapses to zero", () => {
     assert.match(output, /L123456\s+removed-export\s+Foo/);
   });
 });
+
+// noTypeDeclarations must never render as "No broken samples found." — that phrase
+// specifically means "checked, and clean," which is not true when nothing was typed
+// enough to check in the first place. See workspace.ts's detectTypeDeclarations.
+describe("renderHuman: no-type-declarations is its own status, never folded into zero findings", () => {
+  test("renders distinctly from a clean pass, even though findings is also empty in both cases", () => {
+    const clean = stripAnsi(renderHuman(makeResult({ findings: [], noTypeDeclarations: false })));
+    const untyped = stripAnsi(
+      renderHuman(makeResult({ findings: [], noTypeDeclarations: true, definitelyTypedAvailable: true })),
+    );
+    assert.match(clean, /No broken samples found\./);
+    assert.doesNotMatch(untyped, /No broken samples found\./);
+    assert.match(untyped, /ships no type declarations/);
+    assert.match(untyped, /@types\/pkg exists/);
+  });
+
+  test("names the absence of a DefinitelyTyped package too, when there isn't one", () => {
+    const output = stripAnsi(
+      renderHuman(makeResult({ findings: [], noTypeDeclarations: true, definitelyTypedAvailable: false })),
+    );
+    assert.match(output, /no @types\/ package exists for it either/);
+  });
+});
