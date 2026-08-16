@@ -1,3 +1,5 @@
+<img src="apps/web/public/snippetcheck-mark.svg" width="48" height="48" alt="" />
+
 # snippetcheck
 
 [![CI](https://github.com/David19876543210/snippetcheck/actions/workflows/ci.yml/badge.svg)](https://github.com/David19876543210/snippetcheck/actions/workflows/ci.yml)
@@ -9,9 +11,9 @@ A pnpm workspace with two packages:
   the real published package. See its README for the full pitch, usage, flags,
   and a real example run against a live docs site.
 - **`apps/web`** — the landing page, live at
-  [snippetcheck-web.vercel.app](https://snippetcheck-web.vercel.app/) until
-  `snippetcheck.dev` is connected, which collects report requests: hand over a docs
-  URL and an email, get back a real report run by hand against your published docs.
+  [snippetcheck.dev](https://snippetcheck.dev), which collects report requests: hand
+  over a docs URL and an email, get back a real report run by hand against your
+  published docs.
 
 ## Development
 

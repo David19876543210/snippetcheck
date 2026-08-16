@@ -20,18 +20,25 @@ export async function POST(request: NextRequest) {
 
   const { email, docsUrl, packageName } = (body ?? {}) as Record<string, unknown>;
 
-  if (typeof email !== "string" || !isValidEmail(email)) {
-    return NextResponse.json({ error: "That email address doesn't look right." }, { status: 400 });
-  }
-
   const parsedUrl = typeof docsUrl === "string" ? parseHttpsUrl(docsUrl) : null;
   if (!parsedUrl) {
     return NextResponse.json({ error: "That URL did not resolve. Check it and try again." }, { status: 400 });
   }
 
+  const normalizedPackageName = typeof packageName === "string" ? packageName.trim() : "";
+  if (!normalizedPackageName) {
+    return NextResponse.json(
+      { error: "We need the npm package name your docs are about to run the report." },
+      { status: 400 },
+    );
+  }
+
+  if (typeof email !== "string" || !isValidEmail(email)) {
+    return NextResponse.json({ error: "That email address doesn't look right." }, { status: 400 });
+  }
+
   const normalizedUrl = normalizeDocsUrl(parsedUrl);
   const normalizedEmail = email.trim().toLowerCase();
-  const normalizedPackageName = typeof packageName === "string" && packageName.trim() ? packageName.trim() : null;
 
   try {
     const supabase = getSupabaseServiceClient();
@@ -54,16 +61,22 @@ export async function POST(request: NextRequest) {
   }
 
   // A failed notification email shouldn't fail the request — the row is already saved.
+  // The Resend SDK never throws for API-level failures (bad from-address, unverified
+  // domain, etc.) — it always resolves with { data, error }. The error must be
+  // checked explicitly or a failed send is indistinguishable from a successful one.
   try {
     const notifyEmail = process.env.NOTIFY_EMAIL;
     if (notifyEmail) {
       const resend = getResendClient();
-      await resend.emails.send({
+      const { error } = await resend.emails.send({
         from: "snippetcheck <reports@snippetcheck.dev>",
         to: notifyEmail,
         subject: "New snippetcheck report request",
-        text: `docs: ${normalizedUrl}\npackage: ${normalizedPackageName ?? "(not given)"}\nemail: ${normalizedEmail}`,
+        text: `docs: ${normalizedUrl}\npackage: ${normalizedPackageName}\nemail: ${normalizedEmail}`,
       });
+      if (error) {
+        console.error("snippetcheck: resend notification rejected", error);
+      }
     }
   } catch (err) {
     console.error("snippetcheck: resend notification failed", err);

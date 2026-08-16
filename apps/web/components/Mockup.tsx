@@ -14,7 +14,7 @@ export default function Mockup() {
       <br />
       &nbsp;&nbsp;<span className="keyword">const</span> result = <span className="keyword">await</span> streamText({"{"}
       <br />
-      &nbsp;&nbsp;&nbsp;&nbsp;model,
+      &nbsp;&nbsp;&nbsp;&nbsp;model: &quot;gpt-4o&quot;,
       <br />
       &nbsp;&nbsp;&nbsp;&nbsp;prompt: &quot;Plan a trip to Lisbon.&quot;,
       <br />

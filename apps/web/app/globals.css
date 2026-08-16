@@ -282,8 +282,15 @@ pre {
 
 .section h2 {
   font-size: 2rem;
-  margin: 0 0 40px;
+  margin: 0 0 16px;
   letter-spacing: -0.03em;
+}
+
+.section-note {
+  font-size: 0.95rem;
+  opacity: 0.7;
+  max-width: 640px;
+  margin: 0 0 40px;
 }
 
 .grid-2 {
@@ -295,6 +302,22 @@ pre {
 .finding-item h3 {
   font-size: 1.1rem;
   margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.finding-item__tag {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  opacity: 0.6;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 2px 6px;
 }
 
 .finding-item pre {
@@ -345,11 +368,7 @@ ul.limits li::before {
 }
 
 .site-header .wordmark {
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
-}
-
-.site-header .wordmark a {
+  display: inline-flex;
   color: var(--ink);
   text-decoration: none;
 }

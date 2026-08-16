@@ -292,9 +292,12 @@ function extractSymbolAndSuggestion(
       return { symbol: m?.[1] ?? null, suggestion: null };
     }
     case 2561: {
-      const m = /but ['"](.+?)['"] does not exist in type ['"].+?['"]\.\s*Did you mean ['"](.+?)['"]\?/.exec(
-        message,
-      );
+      // Unlike 2551's "Did you mean 'x'?", TS2561's real message reads
+      // "Did you mean to write 'x'?" — a different phrase, not just a different code.
+      const m =
+        /but ['"](.+?)['"] does not exist in type ['"].+?['"]\.\s*Did you mean to write ['"](.+?)['"]\?/.exec(
+          message,
+        );
       return { symbol: m?.[1] ?? null, suggestion: m?.[2] ?? null };
     }
     case 2554:

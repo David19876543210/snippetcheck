@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none" role="img" aria-label="snippetcheck">
+  <title>snippetcheck</title>
+  <g stroke="currentColor" stroke-width="7" stroke-linecap="round">
+    <path d="M11 16 H45"/>
+    <path d="M11 31 H37"/>
+  </g>
+  <path d="M11 46 q4.25 -6 8.5 0 t8.5 0 t8.5 0 t8.5 0"
+        stroke="#C8321E" stroke-width="7" stroke-linecap="round" fill="none"/>
+</svg>

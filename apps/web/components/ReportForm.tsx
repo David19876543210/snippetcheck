@@ -65,6 +65,7 @@ export default function ReportForm({ idPrefix }: { idPrefix: string }) {
         value={packageName}
         onChange={(e) => setPackageName(e.target.value)}
         disabled={submitting}
+        required
         aria-label="npm package name"
       />
       <input

@@ -1,0 +1,29 @@
+# snippetcheck
+
+> snippetcheck extracts every TypeScript code block from a documentation site,
+> installs the package the docs are about, type-checks each block against the real
+> published type declarations, and reports only the samples that provably no longer
+> work. Precision over recall: it never executes code, never guesses, and never
+> reports a diagnostic it can't trace back to the target package's own `.d.ts`
+> files. When in doubt, it stays silent and counts the snippet as skipped.
+
+Run it against a docs site: `npx snippetcheck check <url-or-glob> --package <spec>`.
+
+## Docs
+
+- [CLI README](https://github.com/David19876543210/snippetcheck/blob/main/packages/cli/README.md): full usage, flags, exit codes, skip directives, prior art, and a real example run against a live docs site.
+- [Repo README](https://github.com/David19876543210/snippetcheck/blob/main/README.md): workspace layout and development setup.
+
+## Source
+
+- [GitHub repository](https://github.com/David19876543210/snippetcheck): CLI (`packages/cli`) and this site (`apps/web`), MIT licensed.
+- [npm package](https://www.npmjs.com/package/snippetcheck): `snippetcheck`.
+
+## Verification records
+
+Every finding this project publishes — in the README, on this site, and in its
+hero demo — is real, unedited `snippetcheck` output, hand-verified against the live
+docs it came from before publishing:
+
+- [ai-sdk-verified.md](https://github.com/David19876543210/snippetcheck/blob/main/packages/cli/test/fixtures/ai-sdk-verified.md): every finding from the README's example run against the live Vercel AI SDK docs.
+- [landing-page-verified.md](https://github.com/David19876543210/snippetcheck/blob/main/packages/cli/test/fixtures/landing-page-verified.md): every finding shown on this page.

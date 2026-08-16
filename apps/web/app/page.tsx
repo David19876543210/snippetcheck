@@ -1,9 +1,12 @@
 import Mockup from "../components/Mockup";
 import ReportForm from "../components/ReportForm";
+import Lockup from "../components/Lockup";
 
 // Every comment and code line below is real output from `snippetcheck check` run
-// against `ai@latest` — see packages/cli/test/fixtures/ai-sdk-verified.md for the
-// full verification record. Nothing here is hand-written diagnostic text.
+// against `ai@latest` — see packages/cli/test/fixtures/ai-sdk-verified.md and
+// landing-page-verified.md for the full verification record. The "Unknown Options"
+// card is the one exception, flagged with `synthetic: true` — see the disclosure
+// line rendered under the section heading below.
 const FINDING_KINDS = [
   {
     title: "Removed Exports",
@@ -12,8 +15,8 @@ const FINDING_KINDS = [
   },
   {
     title: "Renamed Exports",
-    comment: "// TS2724: Did you mean 'ToolExecutionOptions'?",
-    code: 'import { ToolExecutionOption } from "ai";',
+    comment: "// TS2724: Did you mean 'LanguageModelMiddleware'?",
+    code: 'import type { LanguageModelV1Middleware } from "ai";',
   },
   {
     title: "Removed Properties",
@@ -28,12 +31,13 @@ const FINDING_KINDS = [
   {
     title: "Unknown Options",
     comment: "// TS2353: Object literal may only specify known properties...",
-    code: 'embed({ model, value: "hello", unrecognizedFlag: true });',
+    code: 'embed({ model: "text-embedding-3-small", value: "hello", unrecognizedFlag: true });',
+    synthetic: true,
   },
   {
     title: "Wrong Arity",
-    comment: "// TS2554: Expected 2 arguments, but got 3.",
-    code: "cosineSimilarity([1, 2], [3, 4], [5, 6]);",
+    comment: "// TS2554: Expected 1 arguments, but got 0.",
+    code: "createUIMessageStream<MyUIMessage>(/* ... */);",
   },
 ];
 
@@ -41,9 +45,9 @@ export default function Home() {
   return (
     <div className="container">
       <header className="site-header">
-        <p className="wordmark mono">
-          <a href="/">snippetcheck</a>
-        </p>
+        <a href="/" className="wordmark" aria-label="snippetcheck">
+          <Lockup height={28} />
+        </a>
       </header>
 
       <header className="hero">
@@ -69,10 +73,17 @@ export default function Home() {
 
       <section className="section">
         <h2>What it checks</h2>
+        <p className="section-note">
+          Real compiler output. Some inputs are constructed to demonstrate a check the AI SDK docs don&apos;t
+          currently trip.
+        </p>
         <div className="grid-2">
           {FINDING_KINDS.map((kind) => (
             <div className="finding-item" key={kind.title}>
-              <h3 className="mono">{kind.title}</h3>
+              <h3 className="mono">
+                {kind.title}
+                {kind.synthetic && <span className="finding-item__tag">constructed input</span>}
+              </h3>
               <pre>
                 <span className="comment">{kind.comment}</span>
                 {"\n"}

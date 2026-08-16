@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Type-checks the TypeScript code samples in your docs against the package you actually publish.",
   "license": "MIT",
+  "homepage": "https://snippetcheck.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/David19876543210/snippetcheck.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/David19876543210/snippetcheck/issues"
+  },
   "type": "module",
   "bin": {
     "snippetcheck": "./dist/cli.js"

@@ -1,5 +1,13 @@
 import pc from "picocolors";
+import { FINDING_KINDS, SKIP_REASONS } from "./types.js";
 import type { CheckResult, Finding, FindingKind, SkipReason, SkippedSnippet } from "./types.js";
+
+// Derived from the enums themselves, not a hand-picked constant — so a future
+// member longer than today's longest can never silently collapse a column's
+// separator to zero spaces the way "unsupported-language" (exactly 20 chars) once
+// did. See test/column-widths.test.ts.
+const FINDING_KIND_COLUMN_WIDTH = Math.max(...FINDING_KINDS.map((k) => k.length)) + 2;
+const SKIP_REASON_COLUMN_WIDTH = Math.max(...SKIP_REASONS.map((r) => r.length)) + 1;
 
 function formatSymbolLike(kind: FindingKind, value: string): string {
   switch (kind) {
@@ -50,7 +58,7 @@ function renderSkippedSummary(skipped: SkippedSnippet[], packageName: string): s
 function renderVerboseSkipped(skipped: SkippedSnippet[]): string[] {
   const lines: string[] = [];
   for (const s of skipped) {
-    const reasonWidth = Math.max(20, s.reason.length + 1);
+    const reasonWidth = Math.max(SKIP_REASON_COLUMN_WIDTH, s.reason.length + 1);
     lines.push(`  ${pc.dim(`L${s.snippet.line}`)}  ${pc.yellow(s.reason.padEnd(reasonWidth))}${s.snippet.source}`);
   }
   return lines;
@@ -90,11 +98,11 @@ export function renderHuman(result: CheckResult, options: RenderOptions = {}): s
         const locRaw = `L${f.line}`;
         const locWidth = Math.max(6, locRaw.length + 1);
         const loc = pc.dim(locRaw.padEnd(locWidth));
-        const kind = pc.red(f.kind.padEnd(18));
+        const kind = pc.red(f.kind.padEnd(FINDING_KIND_COLUMN_WIDTH));
         lines.push(`${indent}${loc}${kind}${findingHeadline(f)}`);
 
         if (f.typescriptSuggestion) {
-          const gutter = " ".repeat(locWidth + 18);
+          const gutter = " ".repeat(locWidth + FINDING_KIND_COLUMN_WIDTH);
           lines.push(`${indent}${gutter}TypeScript suggests: ${formatSymbolLike(f.kind, f.typescriptSuggestion)}`);
         }
       }

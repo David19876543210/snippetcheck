@@ -10,27 +10,37 @@ export interface Snippet {
   sectionPath: string[];
 }
 
-export type SkipReason =
-  | "no-target-import"
-  | "unparseable"
-  | "explicitly-skipped"
-  | "unresolved-import"
-  | "unsupported-language"
-  | "historical-section"
-  | "before-example";
+// The array is the source of truth; the type is derived from it, so the two can
+// never drift apart. report.ts derives its column widths from this same array —
+// see SKIP_REASON_COLUMN_WIDTH — so a new member can never silently break
+// alignment the way "unsupported-language" (exactly 20 chars) once did.
+export const SKIP_REASONS = [
+  "no-target-import",
+  "unparseable",
+  "explicitly-skipped",
+  "unresolved-import",
+  "unsupported-language",
+  "historical-section",
+  "before-example",
+] as const;
+
+export type SkipReason = (typeof SKIP_REASONS)[number];
 
 export interface SkippedSnippet {
   snippet: Snippet;
   reason: SkipReason;
 }
 
-export type FindingKind =
-  | "removed-export"
-  | "renamed-export"
-  | "removed-property"
-  | "renamed-property"
-  | "unknown-option"
-  | "wrong-arity";
+export const FINDING_KINDS = [
+  "removed-export",
+  "renamed-export",
+  "removed-property",
+  "renamed-property",
+  "unknown-option",
+  "wrong-arity",
+] as const;
+
+export type FindingKind = (typeof FINDING_KINDS)[number];
 
 export interface Finding {
   kind: FindingKind;

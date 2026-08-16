@@ -16,10 +16,29 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const TITLE = "Snippetcheck — Your docs still show the old API.";
+const DESCRIPTION =
+  "Snippetcheck compiles every TypeScript sample in your documentation against the version you actually publish, and tells you which ones no longer work.";
+
 export const metadata: Metadata = {
-  title: "Snippetcheck — Your docs still show the old API.",
-  description:
-    "Snippetcheck compiles every TypeScript sample in your documentation against the version you actually publish, and tells you which ones no longer work.",
+  metadataBase: new URL("https://snippetcheck.dev"),
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "https://snippetcheck.dev",
+    siteName: "snippetcheck",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
