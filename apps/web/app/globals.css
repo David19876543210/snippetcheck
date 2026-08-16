@@ -1,0 +1,392 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink: #16181d;
+  --page: #e4e2dd;
+  --paper: #ffffff;
+  --error: #c8321e;
+  --pass: #1f6f4a;
+  --rule: #b8b4ac;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--page);
+  color: var(--ink);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+.mono {
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+code,
+pre {
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Hero */
+.hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  padding: 120px 0;
+  align-items: center;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  line-height: 1.1;
+  letter-spacing: -0.05em;
+  margin: 0 0 24px;
+}
+
+.hero p {
+  font-size: 1.25rem;
+  margin: 0 0 40px;
+  max-width: 500px;
+}
+
+/* Form */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.form-group input {
+  padding: 14px;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-size: 1rem;
+  color: var(--ink);
+  width: 100%;
+}
+
+.form-group input::placeholder {
+  color: #888;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--ink);
+}
+
+.form-group input:disabled {
+  opacity: 0.6;
+}
+
+.form-group button {
+  background-color: var(--ink);
+  color: var(--paper);
+  padding: 16px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.form-group button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.form-group button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-helper {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-top: 12px;
+  max-width: 400px;
+}
+
+.form-status {
+  font-size: 0.9rem;
+  margin-top: 4px;
+  max-width: 400px;
+}
+
+.form-status--error {
+  color: var(--error);
+}
+
+.form-status--success {
+  color: var(--pass);
+}
+
+/* Signature animation element: the docs mockup */
+.mockup {
+  background-color: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  padding: 40px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 1rem;
+  line-height: 1.5;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
+  position: relative;
+  min-height: 420px;
+}
+
+.keyword {
+  color: #666;
+}
+
+.squiggle {
+  position: relative;
+  display: inline-block;
+}
+
+.squiggle::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: radial-gradient(
+        circle at 3px 4px,
+        transparent 4px,
+        var(--error) 4.5px,
+        var(--error) 5px,
+        transparent 5.5px
+      )
+      0 0,
+    radial-gradient(circle at 3px 0px, transparent 4px, var(--error) 4.5px, var(--error) 5px, transparent 5.5px) 3px
+      4px;
+  background-size: 6px 8px;
+  background-repeat: repeat-x;
+  opacity: 1;
+  clip-path: inset(0 0 0 0);
+}
+
+.tooltip {
+  position: absolute;
+  background-color: var(--ink);
+  color: var(--page);
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  max-width: min(350px, calc(100% - 32px));
+  font-family: var(--font-inter), system-ui, sans-serif;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* The two tooltips stack below the code block, like an editor's Problems panel,
+   rather than floating over the lines they annotate — with only 8 lines in the
+   mockup there isn't room to hover a 3-line tooltip over its own line without
+   covering the next finding's squiggle. */
+.tooltip--1 {
+  top: 245px;
+  left: 40px;
+}
+
+.tooltip--2 {
+  top: 340px;
+  left: 40px;
+}
+
+.tooltip span {
+  color: var(--error);
+  font-weight: 600;
+  font-family: var(--font-jetbrains-mono), monospace;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .squiggle--1::after {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    animation: drawSquiggle 0.5s ease forwards;
+    animation-delay: 1s;
+  }
+
+  .squiggle--2::after {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    animation: drawSquiggle 0.5s ease forwards;
+    animation-delay: 2.2s;
+  }
+
+  .tooltip--1 {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideUp 0.4s ease forwards;
+    animation-delay: 1.5s;
+  }
+
+  .tooltip--2 {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideUp 0.4s ease forwards;
+    animation-delay: 2.7s;
+  }
+}
+
+@keyframes drawSquiggle {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sections */
+.section {
+  padding: 80px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.section h2 {
+  font-size: 2rem;
+  margin: 0 0 40px;
+  letter-spacing: -0.03em;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.finding-item h3 {
+  font-size: 1.1rem;
+  margin: 0 0 12px;
+}
+
+.finding-item pre {
+  background-color: transparent;
+  border-left: 2px solid var(--rule);
+  padding: 8px 0 8px 16px;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.comment {
+  color: var(--error);
+}
+
+ul.limits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+ul.limits li {
+  font-size: 1.1rem;
+  margin-bottom: 24px;
+  padding-left: 24px;
+  position: relative;
+  max-width: 800px;
+}
+
+ul.limits li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--rule);
+}
+
+.cta-section {
+  text-align: center;
+  padding: 120px 0;
+}
+
+.cta-section .form-group {
+  margin: 0 auto;
+}
+
+.site-header {
+  padding: 32px 0 0;
+}
+
+.site-header .wordmark {
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.site-header .wordmark a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.site-footer {
+  border-top: 1px solid var(--rule);
+  padding: 40px 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.site-footer a {
+  color: var(--ink);
+}
+
+@media (max-width: 768px) {
+  .hero,
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    padding: 60px 0;
+    gap: 40px;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+  }
+  .tooltip--1 {
+    left: 24px;
+    top: 245px;
+  }
+  .tooltip--2 {
+    left: 24px;
+    top: 340px;
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "snippetcheck",
+  "version": "0.1.0",
+  "description": "Type-checks the TypeScript code samples in your docs against the package you actually publish.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "snippetcheck": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "dev": "tsx src/cli.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "fast-glob": "^3.3.2",
+    "picocolors": "^1.1.1",
+    "typescript": "^5.6.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2"
+  },
+  "keywords": [
+    "documentation",
+    "typescript",
+    "type-check",
+    "docs",
+    "cli",
+    "testing"
+  ]
+}
