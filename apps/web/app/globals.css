@@ -299,6 +299,15 @@ pre {
   gap: 40px;
 }
 
+.finding-item {
+  /* Grid items default to min-width: auto, which floors their width at their
+     content's min-content size. A <pre> line that can't wrap (e.g. the
+     unknown-option example) is wider than a phone viewport, so without this the
+     column — and the whole page — gets forced wider than the viewport, which is
+     what makes mobile browsers fall back to a desktop-width layout entirely. */
+  min-width: 0;
+}
+
 .finding-item h3 {
   font-size: 1.1rem;
   margin: 0 0 12px;
