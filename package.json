@@ -9,5 +9,5 @@
     "dev:web": "pnpm --filter snippetcheck-web dev",
     "dev:cli": "pnpm --filter snippetcheck dev"
   },
-  "packageManager": "pnpm@11.22.0"
+  "packageManager": "pnpm@10.34.5"
 }
