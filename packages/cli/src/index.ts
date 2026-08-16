@@ -10,6 +10,7 @@ export interface RunCheckOptions {
   packageSpec: string;
   maxSnippets: number;
   includeJs: boolean;
+  includeHistorical: boolean;
 }
 
 interface ResolvedDoc {
@@ -54,7 +55,9 @@ export async function runCheck(sources: string[], options: RunCheckOptions): Pro
   const extractSkipped: SkippedSnippet[] = [];
 
   for (const doc of docs) {
-    const { snippets, skipped } = extractSnippets(doc.text, doc.source);
+    const { snippets, skipped } = extractSnippets(doc.text, doc.source, {
+      includeHistorical: options.includeHistorical,
+    });
     allSnippets.push(...snippets);
     extractSkipped.push(...skipped);
   }

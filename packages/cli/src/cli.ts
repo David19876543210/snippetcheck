@@ -17,6 +17,7 @@ Options:
   --out <file>           Write the JSON report to a file
   --max-snippets <n>     Cap on snippets checked (default 500)
   --include-js           Also check js/jsx blocks via checkJs (off by default)
+  --include-historical   Also check migration/changelog/upgrade sections (off by default)
   --verbose              Show the skip reason for every skipped snippet
 
 Exit codes:
@@ -34,6 +35,7 @@ interface ParsedArgs {
   out: string | null;
   maxSnippets: number;
   includeJs: boolean;
+  includeHistorical: boolean;
   verbose: boolean;
 }
 
@@ -46,6 +48,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     out: null,
     maxSnippets: 500,
     includeJs: false,
+    includeHistorical: false,
     verbose: false,
   };
 
@@ -77,6 +80,9 @@ function parseArgs(argv: string[]): ParsedArgs {
       }
       case "--include-js":
         result.includeJs = true;
+        break;
+      case "--include-historical":
+        result.includeHistorical = true;
         break;
       case "--verbose":
         result.verbose = true;
@@ -139,6 +145,7 @@ async function main(): Promise<void> {
       packageSpec: parsed.packageSpec,
       maxSnippets: parsed.maxSnippets,
       includeJs: parsed.includeJs,
+      includeHistorical: parsed.includeHistorical,
     });
 
     if (parsed.json) {

@@ -224,3 +224,125 @@ describe("importMatchesPackage", () => {
     assert.equal(importMatchesPackage("@scope/pkg2", "@scope/pkg"), false);
   });
 });
+
+describe("extractSnippets: section path", () => {
+  test("tracks nested heading levels", () => {
+    const md = [
+      "# AI SDK Core",
+      "## Streaming",
+      "### Text streams",
+      "```ts",
+      "const a = 1;",
+      "```",
+    ].join("\n");
+    const { snippets } = extractSnippets(md, "doc.md");
+    assert.deepEqual(snippets[0].sectionPath, ["AI SDK Core", "Streaming", "Text streams"]);
+  });
+
+  test("a heading truncates deeper levels that came before it", () => {
+    const md = [
+      "# Guide",
+      "## Section A",
+      "### Sub A.1",
+      "## Section B",
+      "```ts",
+      "const a = 1;",
+      "```",
+    ].join("\n");
+    const { snippets } = extractSnippets(md, "doc.md");
+    assert.deepEqual(snippets[0].sectionPath, ["Guide", "Section B"]);
+  });
+
+  test("strips links, backticks, emphasis, and trailing anchors from titles", () => {
+    const md = ["## [Structured Data](/structured) with `zod` **schemas** {#structured-data}", "```ts", "const a = 1;", "```"].join(
+      "\n",
+    );
+    const { snippets, skipped } = extractSnippets(md, "doc.md");
+    assert.equal(skipped.length, 0);
+    assert.deepEqual(snippets[0].sectionPath, ["Structured Data with zod schemas"]);
+  });
+
+  test("does not mangle underscores inside identifiers (only strips paired emphasis)", () => {
+    const md = ["# AI_NoOutputSpecifiedError", "```ts", "const a = 1;", "```"].join("\n");
+    const { snippets } = extractSnippets(md, "doc.md");
+    assert.deepEqual(snippets[0].sectionPath, ["AI_NoOutputSpecifiedError"]);
+  });
+});
+
+describe("extractSnippets: historical sections are skipped by default", () => {
+  for (const heading of [
+    "## Migrating to v5",
+    "## Upgrade guide",
+    "## Changelog",
+    "## Release notes",
+    "## Breaking changes",
+    "## Deprecated APIs",
+    "## Legacy usage",
+    "## What's new in v5",
+    "## Moving from v4 to v5",
+    "## v4.x compatibility",
+  ]) {
+    test(`"${heading}" is skipped as historical-section`, () => {
+      const md = [heading, "```ts", "import { Foo } from \"pkg\";", "```"].join("\n");
+      const { snippets, skipped } = extractSnippets(md, "doc.md");
+      assert.equal(snippets.length, 0);
+      assert.equal(skipped.length, 1);
+      assert.equal(skipped[0].reason, "historical-section");
+    });
+  }
+
+  test("a benign heading is not treated as historical", () => {
+    const md = ["## Generating structured data", "```ts", "const a = 1;", "```"].join("\n");
+    const { snippets, skipped } = extractSnippets(md, "doc.md");
+    assert.equal(snippets.length, 1);
+    assert.equal(skipped.length, 0);
+  });
+
+  test("--include-historical disables the skip", () => {
+    const md = ["## Migration guide", "```ts", "const a = 1;", "```"].join("\n");
+    const { snippets, skipped } = extractSnippets(md, "doc.md", { includeHistorical: true });
+    assert.equal(snippets.length, 1);
+    assert.equal(skipped.length, 0);
+    assert.deepEqual(snippets[0].sectionPath, ["Migration guide"]);
+  });
+});
+
+describe("extractSnippets: before/old example snippets are skipped", () => {
+  test("info string containing 'Before' skips the block", () => {
+    const md = ['```ts title="Before"', "const a = 1;", "```"].join("\n");
+    const { snippets, skipped } = extractSnippets(md, "doc.md");
+    assert.equal(snippets.length, 0);
+    assert.equal(skipped.length, 1);
+    assert.equal(skipped[0].reason, "before-example");
+  });
+
+  test("a preceding line saying 'the old way' skips the block", () => {
+    const md = ["This is the old way:", "", "", "```ts", "const a = 1;", "```"].join("\n");
+    const { snippets, skipped } = extractSnippets(md, "doc.md");
+    assert.equal(snippets.length, 0);
+    assert.equal(skipped.length, 1);
+    assert.equal(skipped[0].reason, "before-example");
+  });
+
+  test("a preceding line with a ❌ marks the block as a before-example", () => {
+    const md = ["❌ Don't do this:", "", "", "```ts", "const a = 1;", "```"].join("\n");
+    const { snippets, skipped } = extractSnippets(md, "doc.md");
+    assert.equal(snippets.length, 0);
+    assert.equal(skipped.length, 1);
+    assert.equal(skipped[0].reason, "before-example");
+  });
+
+  test("a before-marker more than three lines above the fence does not skip it", () => {
+    const md = ["This is the old way:", "", "", "", "```ts", "const a = 1;", "```"].join("\n");
+    const { snippets, skipped } = extractSnippets(md, "doc.md");
+    assert.equal(snippets.length, 1);
+    assert.equal(skipped.length, 0);
+  });
+
+  test("an ordinary snippet with no before/old markers is not skipped", () => {
+    const md = ["Here is how you generate text:", "", "", "```ts", "const a = 1;", "```"].join("\n");
+    const { snippets, skipped } = extractSnippets(md, "doc.md");
+    assert.equal(snippets.length, 1);
+    assert.equal(skipped.length, 0);
+  });
+});

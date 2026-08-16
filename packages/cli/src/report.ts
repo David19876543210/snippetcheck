@@ -1,35 +1,29 @@
 import pc from "picocolors";
-import type { CheckResult, Finding, SkipReason, SkippedSnippet } from "./types.js";
+import type { CheckResult, Finding, FindingKind, SkipReason, SkippedSnippet } from "./types.js";
 
-function describeFinding(f: Finding): string {
-  switch (f.kind) {
-    case "removed-export":
-      return `${f.symbol ?? "?"} is no longer exported`;
-    case "renamed-export":
-      return f.suggestion
-        ? `${f.symbol ?? "?"}  →  did you mean '${f.suggestion}'?`
-        : `${f.symbol ?? "?"} is no longer exported`;
-    case "removed-property":
-      return `.${f.symbol ?? "?"} does not exist`;
+function formatSymbolLike(kind: FindingKind, value: string): string {
+  switch (kind) {
     case "renamed-property":
-      return f.suggestion
-        ? `.${f.symbol ?? "?"}  →  did you mean .${f.suggestion}?`
-        : `.${f.symbol ?? "?"} does not exist`;
+    case "removed-property":
+      return `.${value}`;
     case "unknown-option":
-      return f.suggestion
-        ? `'${f.symbol ?? "?"}'  →  did you mean '${f.suggestion}'?`
-        : `unknown option '${f.symbol ?? "?"}'`;
-    case "wrong-arity":
-      return f.message;
+      return `'${value}'`;
     default:
-      return f.message;
+      return value;
   }
+}
+
+function findingHeadline(f: Finding): string {
+  if (f.symbol) return formatSymbolLike(f.kind, f.symbol);
+  return f.message;
 }
 
 const REASON_PHRASES: Record<SkipReason, (n: number, packageName: string) => string> = {
   "no-target-import": (n, pkg) => `${n} do not import ${pkg}`,
   unparseable: (n) => `${n} unparseable`,
   "explicitly-skipped": (n) => `${n} marked skip`,
+  "historical-section": (n) => `${n} historical/migration content`,
+  "before-example": (n) => `${n} before/old examples`,
   "unresolved-import": (n) => `${n} unresolved import`,
   "unsupported-language": (n) => `${n} JS/JSX (use --include-js)`,
 };
@@ -38,6 +32,8 @@ const REASON_ORDER: SkipReason[] = [
   "no-target-import",
   "unparseable",
   "explicitly-skipped",
+  "historical-section",
+  "before-example",
   "unresolved-import",
   "unsupported-language",
 ];
@@ -75,13 +71,34 @@ export function renderHuman(result: CheckResult, options: RenderOptions = {}): s
 
   for (const [source, findings] of bySource) {
     lines.push(pc.bold(source));
-    for (const f of [...findings].sort((a, b) => a.line - b.line)) {
-      const locRaw = `L${f.line}`;
-      const loc = pc.dim(locRaw.padEnd(Math.max(6, locRaw.length + 1)));
-      const kind = pc.red(f.kind.padEnd(18));
-      lines.push(`  ${loc}${kind}${describeFinding(f)}`);
-    }
     lines.push("");
+
+    const bySection = new Map<string, Finding[]>();
+    for (const f of findings) {
+      const key = f.section ?? "";
+      const list = bySection.get(key) ?? [];
+      list.push(f);
+      bySection.set(key, list);
+    }
+
+    for (const [section, sectionFindings] of bySection) {
+      const indent = section ? "    " : "  ";
+      if (section) lines.push(`  ${pc.bold(section)}`);
+
+      for (const f of [...sectionFindings].sort((a, b) => a.line - b.line)) {
+        const locRaw = `L${f.line}`;
+        const locWidth = Math.max(6, locRaw.length + 1);
+        const loc = pc.dim(locRaw.padEnd(locWidth));
+        const kind = pc.red(f.kind.padEnd(18));
+        lines.push(`${indent}${loc}${kind}${findingHeadline(f)}`);
+
+        if (f.suggestion) {
+          const gutter = " ".repeat(locWidth + 18);
+          lines.push(`${indent}${gutter}TypeScript suggests: ${formatSymbolLike(f.kind, f.suggestion)}`);
+        }
+      }
+      lines.push("");
+    }
   }
 
   if (result.findings.length === 0) {

@@ -160,6 +160,8 @@ function toFinding(
     column: character + 1,
     excerpt,
     snippetId: snippet.id,
+    section: snippet.sectionPath.length > 0 ? snippet.sectionPath[snippet.sectionPath.length - 1] : null,
+    sectionPath: snippet.sectionPath,
   };
 }
 

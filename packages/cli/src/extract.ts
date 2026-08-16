@@ -1,9 +1,21 @@
 import type { Snippet, SkippedSnippet, SnippetLang } from "./types.js";
 
 const FENCE_RE = /^(\s*)(`{3,}|~{3,})(.*)$/;
+const HEADING_RE = /^(#{1,6})\s+(.*)$/;
 
 const SKIP_TOKENS = ["snippetcheck-skip", "no-test", "notest", "skip-test", "nocompile"];
 const SKIP_COMMENT_RE = /<!--\s*snippetcheck:\s*skip\s*-->/i;
+
+/**
+ * Deliberately tight. Every term added trades away recall; every term missing
+ * ships a false positive on migration/changelog content. Extend with care.
+ */
+const HISTORICAL_SECTION_RE =
+  /migrat|upgrad|changelog|release notes|breaking change|deprecat|legacy|what'?s new|v?\d+\s*(?:to|→|->)\s*v?\d+|\bv\d+\.x\b/i;
+
+const BEFORE_INFO_TOKENS = ["before", "old", "v4", "don't"];
+const BEFORE_LINE_RE = /\b(before|old|previously|deprecated|don'?t|instead of|no longer)\b/i;
+const BEFORE_EMOJI_RE = /[❌🚫]/;
 
 const LANG_MAP: Record<string, SnippetLang> = {
   ts: "ts",
@@ -44,12 +56,44 @@ function hasSkipToken(infoRaw: string): boolean {
   return SKIP_TOKENS.some((t) => lower.includes(t));
 }
 
-function precedingLinesHaveSkipComment(lines: string[], fenceLineIndex: number): boolean {
+function anyPrecedingLineMatches(lines: string[], fenceLineIndex: number, test: (line: string) => boolean): boolean {
   const start = Math.max(0, fenceLineIndex - 3);
   for (let k = start; k < fenceLineIndex; k++) {
-    if (SKIP_COMMENT_RE.test(lines[k])) return true;
+    if (test(lines[k])) return true;
   }
   return false;
+}
+
+function precedingLinesHaveSkipComment(lines: string[], fenceLineIndex: number): boolean {
+  return anyPrecedingLineMatches(lines, fenceLineIndex, (line) => SKIP_COMMENT_RE.test(line));
+}
+
+function isHistoricalSection(sectionPath: string[]): boolean {
+  return HISTORICAL_SECTION_RE.test(sectionPath.join(" > "));
+}
+
+function hasBeforeExampleInfo(infoRaw: string): boolean {
+  const lower = infoRaw.toLowerCase();
+  return BEFORE_INFO_TOKENS.some((t) => lower.includes(t));
+}
+
+function precedingLinesHaveBeforeMarker(lines: string[], fenceLineIndex: number): boolean {
+  return anyPrecedingLineMatches(
+    lines,
+    fenceLineIndex,
+    (line) => BEFORE_LINE_RE.test(line) || BEFORE_EMOJI_RE.test(line),
+  );
+}
+
+function stripHeadingMarkdown(title: string): string {
+  return title
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s*\{#[^}]*\}\s*$/, "")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .trim();
 }
 
 function makeId(source: string, line: number, index: number): string {
@@ -99,10 +143,16 @@ export interface ExtractResult {
   skipped: SkippedSnippet[];
 }
 
-export function extractSnippets(text: string, source: string): ExtractResult {
+export interface ExtractOptions {
+  /** Off by default: historical/migration sections are skipped, not reported. */
+  includeHistorical?: boolean;
+}
+
+export function extractSnippets(text: string, source: string, options: ExtractOptions = {}): ExtractResult {
   const rawLines = text.split(/\r\n|\r|\n/);
   const snippets: Snippet[] = [];
   const skipped: SkippedSnippet[] = [];
+  const headingStack: string[] = [];
 
   let i = 0;
   let blockIndex = 0;
@@ -111,6 +161,13 @@ export function extractSnippets(text: string, source: string): ExtractResult {
     const line = rawLines[i];
     const m = FENCE_RE.exec(line);
     if (!m) {
+      const headingMatch = HEADING_RE.exec(line);
+      if (headingMatch) {
+        const level = headingMatch[1].length;
+        const title = stripHeadingMarkdown(headingMatch[2]);
+        headingStack.length = Math.min(headingStack.length, level - 1);
+        headingStack.push(title);
+      }
       i++;
       continue;
     }
@@ -153,12 +210,23 @@ export function extractSnippets(text: string, source: string): ExtractResult {
       lang,
       code,
       imports: findImports(code),
+      sectionPath: [...headingStack],
     };
 
     const explicitSkip = hasSkipToken(infoRaw) || precedingLinesHaveSkipComment(rawLines, openLineIndex);
 
     if (explicitSkip) {
       skipped.push({ snippet, reason: "explicitly-skipped" });
+      continue;
+    }
+
+    if (!options.includeHistorical && isHistoricalSection(snippet.sectionPath)) {
+      skipped.push({ snippet, reason: "historical-section" });
+      continue;
+    }
+
+    if (hasBeforeExampleInfo(infoRaw) || precedingLinesHaveBeforeMarker(rawLines, openLineIndex)) {
+      skipped.push({ snippet, reason: "before-example" });
       continue;
     }
 

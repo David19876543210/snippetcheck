@@ -7,6 +7,7 @@ export interface Snippet {
   lang: SnippetLang;
   code: string;
   imports: string[];
+  sectionPath: string[];
 }
 
 export type SkipReason =
@@ -14,7 +15,9 @@ export type SkipReason =
   | "unparseable"
   | "explicitly-skipped"
   | "unresolved-import"
-  | "unsupported-language";
+  | "unsupported-language"
+  | "historical-section"
+  | "before-example";
 
 export interface SkippedSnippet {
   snippet: Snippet;
@@ -40,6 +43,8 @@ export interface Finding {
   column: number;
   excerpt: string;
   snippetId: string;
+  section: string | null;
+  sectionPath: string[];
 }
 
 export interface CheckResult {
