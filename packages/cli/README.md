@@ -38,24 +38,87 @@ Real output, from a real run against the live Vercel AI SDK docs on 2026-08-16,
 checked against the `ai` package's own `latest` tag:
 
 ```
-snippetcheck: capped at 500 snippets, 4099 not scanned (raise with --max-snippets).
+snippetcheck: sampled 500 of 4,460 snippets, evenly spaced (raise with --max-snippets).
 https://ai-sdk.dev/llms-full.txt
-  L7403   removed-export    StreamData is no longer exported
-  L7432   renamed-property  .toDataStreamResponse  →  did you mean .toTextStreamResponse?
-  L7837   removed-export    experimental_createMCPClient is no longer exported
-  L9165   removed-export    LanguageModelV1StreamPart is no longer exported
-  L11258  removed-export    appendClientMessage is no longer exported
-  L13947  removed-export    NoOutputSpecifiedError is no longer exported
-  L14170  removed-export    ToolExecutionError is no longer exported
 
-7 broken samples in 1 document.
-Checked 80 TypeScript samples against ai@7.0.66.
-Skipped 420 snippets (228 do not import ai, 190 unresolved import, 2 JS/JSX (use --include-js)).
+  Sending Custom Data
+    L5152 renamed-export    pipeDataStreamToResponse
+                            TypeScript suggests: pipeTextStreamToResponse
+    L5168 removed-property  .mergeIntoDataStream
+    L5511 renamed-export    pipeDataStreamToResponse
+                            TypeScript suggests: pipeTextStreamToResponse
+    L5527 removed-property  .mergeIntoDataStream
+
+  Image Generation
+    L8413 renamed-export    experimental_generateImage
+                            TypeScript suggests: Experimental_GeneratedImage
+
+  Custom Headers
+    L8564 renamed-export    experimental_generateImage
+                            TypeScript suggests: Experimental_GeneratedImage
+
+  Guardrails
+    L9282 renamed-export    LanguageModelV1Middleware
+                            TypeScript suggests: LanguageModelMiddleware
+
+  Usage Information
+    L10636 renamed-property  .toDataStreamResponse
+                             TypeScript suggests: .toTextStreamResponse
+
+  Client-side page
+    L11726 renamed-export    ToolInvocation
+                             TypeScript suggests: UIToolInvocation
+
+  Example
+    L12896 removed-export    AssistantResponse
+
+  Generating Multiple Images
+    L33550 renamed-export    experimental_generateImage
+                             TypeScript suggests: Experimental_GeneratedImage
+
+  Using Inferred Types
+    L36855 wrong-arity       Expected 1 arguments, but got 0.
+
+  Image Models
+    L42583 renamed-export    experimental_generateImage
+                             TypeScript suggests: Experimental_GeneratedImage
+
+  Prompt Caching
+    L43949 removed-property  .cachedInputTokens
+
+  Basic Usage
+    L48345 renamed-export    experimental_generateImage
+                             TypeScript suggests: Experimental_GeneratedImage
+    L55705 renamed-export    experimental_generateImage
+                             TypeScript suggests: Experimental_GeneratedImage
+
+  Model-specific options
+    L49206 renamed-export    experimental_generateImage
+                             TypeScript suggests: Experimental_GeneratedImage
+
+  Modify Image
+    L49592 renamed-export    experimental_generateImage
+                             TypeScript suggests: Experimental_GeneratedImage
+
+  Reasoning Output
+    L83176 removed-property  .textDelta
+
+19 broken samples in 1 document.
+Checked 272 TypeScript samples against ai@7.0.66.
+Skipped 367 snippets (224 do not import ai, 2 unparseable, 24 historical/migration content, 115 before/old examples, 2 JS/JSX (use --include-js)).
 ```
 
-Every one of those seven lines is a real diagnostic, traced back to `ai`'s own
-`.d.ts` files at the version snippetcheck actually installed — not a guess about
-what probably changed.
+Every one of those lines is a real diagnostic, traced back to `ai`'s own `.d.ts`
+files at the version snippetcheck actually installed, grouped under the section it
+came from — not a guess about what probably changed, and not attributed to a
+migration guide or a before/after comparison that was never meant to compile.
+
+Look closely at the `experimental_generateImage` lines: TypeScript suggests
+`Experimental_GeneratedImage` — a *type*, not a function. The actually-correct
+replacement is `generateImage` (the docs' own prose says so), but that's not the
+closest-spelled name, so `tsc`'s similarity algorithm didn't find it. This is exactly
+why the report says "TypeScript suggests," never "did you mean" as if it were
+snippetcheck's own advice — see [What this does not do](#what-this-does-not-do) below.
 
 You can also point it at local files:
 
@@ -76,8 +139,9 @@ which are the fastest way to scan an entire docs site in one request.
 | `--package <spec>` | **Required.** The package to check against: `zod`, `zod@3.22.4`, `@scope/pkg@next`. The version defaults to `latest` if omitted. |
 | `--json` | Machine-readable output to stdout; human output suppressed. |
 | `--out <file>` | Write the JSON report to a file. |
-| `--max-snippets <n>` | Cap on snippets checked, for large sites. Default `500`. |
+| `--max-snippets <n>` | Cap on snippets checked, for large sites. When exceeded, snippets are sampled evenly across the document rather than taking the first N — otherwise everything skews toward whatever's early in the file. Default `500`. |
 | `--include-js` | Also check `js`/`jsx` blocks via `checkJs`. Off by default — JS blocks produce more noise. |
+| `--include-historical` | Also check snippets under migration/upgrade/changelog/deprecated headings. Off by default — see [Historical and before/after content](#historical-and-beforeafter-content). |
 | `--verbose` | Show the skip reason for every skipped snippet. |
 
 ## Exit codes
@@ -105,12 +169,35 @@ Any of `snippetcheck-skip`, `no-test`, `notest`, `skip-test`, or `nocompile` in 
 fence's info string works. So does an HTML comment on one of the three lines above
 the fence:
 
-```md
+````md
 <!-- snippetcheck: skip -->
 ```ts
 const client = connectToYourBackend();
 ```
-```
+````
+
+## Historical and before/after content
+
+`llms-full.txt` and full-site dumps concatenate an entire docs site — including
+migration guides, changelogs, and before/after comparisons. Those pages contain
+snippets that *deliberately* show the removed API; a migration guide demonstrating
+the old way of doing something is not a broken doc, it's a doc doing its job.
+
+By default, snippetcheck skips two kinds of content rather than risk reporting them:
+
+- **Historical sections** — any snippet nested under a heading matching migration,
+  upgrade, changelog, release notes, breaking change, deprecated, legacy, "what's
+  new", or a version-to-version pattern like "v4 to v5" or "v4.x". Pass
+  `--include-historical` to check these anyway (useful if you're auditing your own
+  migration guide for accuracy).
+- **Before/after demonstration snippets** — a fenced block whose info string or
+  three preceding lines say before/old/previously/deprecated/don't/instead
+  of/no longer, or lead with a ❌ or 🚫. These are almost always the "here's what
+  not to do" half of a before/after pair.
+
+Both are tracked as their own skip reasons (`historical-section`, `before-example`)
+in `--verbose` output and the JSON report, so you can see exactly how much content
+was excluded and why.
 
 ## What this does not do
 
@@ -126,11 +213,17 @@ const client = connectToYourBackend();
   finding costs nothing; reporting a fake one costs the reader's trust in every other
   line of the report.
 - **It has an opinion about which diagnostics matter.** Only seven TypeScript
-  diagnostic codes are ever reported — removed exports, renamed exports (with a
-  "did you mean"), removed properties, renamed properties, unknown object options,
-  and wrong argument counts. Type mismatches, undeclared names, and everything else
-  TypeScript can flag are discarded as too noisy for docs that were never written to
-  be strict-mode clean.
+  diagnostic codes are ever reported — removed exports, renamed exports, removed
+  properties, renamed properties, unknown object options, and wrong argument counts.
+  Type mismatches, undeclared names, and everything else TypeScript can flag are
+  discarded as too noisy for docs that were never written to be strict-mode clean.
+- **It never presents TypeScript's guess as its own advice.** When a diagnostic
+  carries a "Did you mean 'x'?", the report shows it as `TypeScript suggests: x` —
+  `tsc`'s own string-similarity guess, not a verified migration target. The real
+  replacement for a renamed symbol is sometimes not the closest-spelled name. In
+  `--json`, this is the `typescriptSuggestion` field, not `suggestion`.
+- **It skips migration guides and before/after demonstrations by default.** See
+  [Historical and before/after content](#historical-and-beforeafter-content).
 
 ## Prior art
 

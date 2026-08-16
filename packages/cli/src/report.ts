@@ -50,7 +50,8 @@ function renderSkippedSummary(skipped: SkippedSnippet[], packageName: string): s
 function renderVerboseSkipped(skipped: SkippedSnippet[]): string[] {
   const lines: string[] = [];
   for (const s of skipped) {
-    lines.push(`  ${pc.dim(`L${s.snippet.line}`)}  ${pc.yellow(s.reason.padEnd(20))}${s.snippet.source}`);
+    const reasonWidth = Math.max(20, s.reason.length + 1);
+    lines.push(`  ${pc.dim(`L${s.snippet.line}`)}  ${pc.yellow(s.reason.padEnd(reasonWidth))}${s.snippet.source}`);
   }
   return lines;
 }
@@ -92,9 +93,9 @@ export function renderHuman(result: CheckResult, options: RenderOptions = {}): s
         const kind = pc.red(f.kind.padEnd(18));
         lines.push(`${indent}${loc}${kind}${findingHeadline(f)}`);
 
-        if (f.suggestion) {
+        if (f.typescriptSuggestion) {
           const gutter = " ".repeat(locWidth + 18);
-          lines.push(`${indent}${gutter}TypeScript suggests: ${formatSymbolLike(f.kind, f.suggestion)}`);
+          lines.push(`${indent}${gutter}TypeScript suggests: ${formatSymbolLike(f.kind, f.typescriptSuggestion)}`);
         }
       }
       lines.push("");

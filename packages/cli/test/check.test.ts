@@ -1,7 +1,32 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { parsePackageSpec } from "../src/workspace.js";
-import { runCheck } from "../src/index.js";
+import { runCheck, sampleEvenly } from "../src/index.js";
+
+describe("sampleEvenly", () => {
+  test("returns exactly max items when the pool is larger", () => {
+    const items = Array.from({ length: 4599 }, (_, i) => i);
+    assert.equal(sampleEvenly(items, 500).length, 500);
+  });
+
+  test("matches the exact index formula from the fix spec", () => {
+    const items = Array.from({ length: 10 }, (_, i) => i);
+    assert.deepEqual(sampleEvenly(items, 5), [0, 2, 4, 6, 8]);
+  });
+
+  test("spans the whole document rather than clustering at the start", () => {
+    const items = Array.from({ length: 1000 }, (_, i) => i);
+    const sampled = sampleEvenly(items, 10);
+    // A prefix-take would produce [0..9]. An even sample must reach the far end.
+    assert.deepEqual(sampled, [0, 100, 200, 300, 400, 500, 600, 700, 800, 900]);
+  });
+
+  test("never indexes past the end of the pool", () => {
+    const items = Array.from({ length: 11 }, (_, i) => i);
+    const sampled = sampleEvenly(items, 10);
+    assert.ok(sampled.every((v) => v < 11));
+  });
+});
 
 describe("parsePackageSpec", () => {
   test("unscoped package with no version defaults to latest", () => {
@@ -41,6 +66,7 @@ describe("checkSnippets end-to-end (real package, network required)", () => {
         packageSpec: "ai@5.0.237",
         maxSnippets: 500,
         includeJs: false,
+        includeHistorical: false,
       });
 
       assert.equal(result.packageName, "ai");
@@ -85,6 +111,62 @@ describe("checkSnippets end-to-end (real package, network required)", () => {
         result.findings.some((f) => f.symbol === "maxSteps"),
         false,
       );
+    },
+  );
+
+  // Fix 2: a snippet importing both the target package and an uninstalled third-party
+  // package used to get dropped entirely (skip reason "unresolved-import" fired on ANY
+  // TS2307, not just the target package's own). That silently threw away every real
+  // finding in snippets like this one. It must now still be checked, and the real
+  // break in the target-package import must still be found.
+  test(
+    "an unresolved third-party import does not suppress a real target-package break",
+    { timeout: 180_000 },
+    async () => {
+      const result = await runCheck(["test/fixtures/mixed-import.md"], {
+        packageSpec: "ai@5.0.237",
+        maxSnippets: 500,
+        includeJs: false,
+        includeHistorical: false,
+      });
+
+      assert.equal(result.snippetsChecked, 1);
+      assert.equal(
+        result.skipped.some((s) => s.reason === "unresolved-import"),
+        false,
+        "the snippet must not be skipped just because a third-party import is unresolved",
+      );
+
+      const removedExport = result.findings.find((f) => f.kind === "removed-export");
+      assert.ok(removedExport, "expected the LangChainAdapter break to still be found");
+      assert.equal(removedExport?.symbol, "LangChainAdapter");
+      assert.equal(removedExport?.code, 2305);
+    },
+  );
+
+  // TS2305's message is prefixed with "Module "; TS2724's is not. A regex written
+  // only against the TS2305 shape matches nothing for TS2724 and silently drops
+  // every renamed-export finding, for every package, unconditionally. Caught while
+  // hand-verifying real examples for Fix 6 — this was broken from day one.
+  test(
+    "a renamed export (TS2724, no 'Module ' prefix in the message) is still found",
+    { timeout: 180_000 },
+    async () => {
+      // ToolExecutionOptions doesn't exist in ai@5.0.237 (the version pinned
+      // elsewhere in this file) — it was introduced later. Pinned to an exact
+      // version (rather than @latest) so this test doesn't drift over time.
+      const result = await runCheck(["test/fixtures/renamed-export.md"], {
+        packageSpec: "ai@7.0.66",
+        maxSnippets: 500,
+        includeJs: false,
+        includeHistorical: false,
+      });
+
+      const renamedExport = result.findings.find((f) => f.kind === "renamed-export");
+      assert.ok(renamedExport, "expected a renamed-export finding for ToolExecutionOption");
+      assert.equal(renamedExport?.symbol, "ToolExecutionOption");
+      assert.equal(renamedExport?.code, 2724);
+      assert.equal(renamedExport?.typescriptSuggestion, "ToolExecutionOptions");
     },
   );
 });

@@ -153,7 +153,7 @@ pre {
   line-height: 1.5;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
   position: relative;
-  min-height: 420px;
+  min-height: 580px;
 }
 
 .keyword {
@@ -207,12 +207,12 @@ pre {
    mockup there isn't room to hover a 3-line tooltip over its own line without
    covering the next finding's squiggle. */
 .tooltip--1 {
-  top: 245px;
+  top: 335px;
   left: 40px;
 }
 
 .tooltip--2 {
-  top: 340px;
+  top: 415px;
   left: 40px;
 }
 
@@ -383,10 +383,10 @@ ul.limits li::before {
   }
   .tooltip--1 {
     left: 24px;
-    top: 245px;
+    top: 335px;
   }
   .tooltip--2 {
     left: 24px;
-    top: 340px;
+    top: 415px;
   }
 }

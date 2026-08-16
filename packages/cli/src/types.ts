@@ -37,7 +37,11 @@ export interface Finding {
   symbol: string | null;
   code: number;
   message: string;
-  suggestion: string | null;
+  /**
+   * TypeScript's own "Did you mean 'x'?" guess, based on string similarity — not a
+   * verified migration target. Never render this as if it were snippetcheck's advice.
+   */
+  typescriptSuggestion: string | null;
   source: string;
   line: number;
   column: number;
@@ -52,6 +56,10 @@ export interface CheckResult {
   packageVersion: string;
   documentsScanned: number;
   snippetsFound: number;
+  /** The true denominator: how many snippets were eligible for checking before
+   *  --max-snippets sampling truncated the pool. Equal to snippetsChecked plus
+   *  every check-time skip reason when no sampling occurred. */
+  snippetsTotal: number;
   snippetsChecked: number;
   skipped: SkippedSnippet[];
   findings: Finding[];

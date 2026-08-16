@@ -45,6 +45,21 @@ async function resolveSources(patterns: string[]): Promise<ResolvedDoc[]> {
   return docs;
 }
 
+/**
+ * Taking the first N snippets in document order biases everything toward whatever
+ * appears early in a concatenated file — for llms-full.txt, usually the introduction.
+ * Sample evenly across the whole document instead.
+ */
+export function sampleEvenly<T>(items: T[], max: number): T[] {
+  const total = items.length;
+  const result: T[] = [];
+  for (let i = 0; i < max; i++) {
+    const idx = Math.min(total - 1, Math.round((i * total) / max));
+    result.push(items[idx]);
+  }
+  return result;
+}
+
 export async function runCheck(sources: string[], options: RunCheckOptions): Promise<CheckResult> {
   const docs = await resolveSources(sources);
   if (docs.length === 0) {
@@ -62,13 +77,13 @@ export async function runCheck(sources: string[], options: RunCheckOptions): Pro
     extractSkipped.push(...skipped);
   }
 
+  const snippetsTotal = allSnippets.length;
   let candidates = allSnippets;
-  if (allSnippets.length > options.maxSnippets) {
-    const excess = allSnippets.length - options.maxSnippets;
+  if (snippetsTotal > options.maxSnippets) {
     console.error(
-      `snippetcheck: capped at ${options.maxSnippets} snippets, ${excess} not scanned (raise with --max-snippets).`,
+      `snippetcheck: sampled ${options.maxSnippets.toLocaleString()} of ${snippetsTotal.toLocaleString()} snippets, evenly spaced (raise with --max-snippets).`,
     );
-    candidates = allSnippets.slice(0, options.maxSnippets);
+    candidates = sampleEvenly(allSnippets, options.maxSnippets);
   }
 
   const workspace = await createWorkspace(options.packageSpec);
@@ -84,6 +99,7 @@ export async function runCheck(sources: string[], options: RunCheckOptions): Pro
       packageVersion: workspace.packageVersion,
       documentsScanned: docs.length,
       snippetsFound: allSnippets.length + extractSkipped.length,
+      snippetsTotal,
       snippetsChecked: checkResult.checked,
       skipped: [...extractSkipped, ...checkResult.skipped],
       findings: checkResult.findings,

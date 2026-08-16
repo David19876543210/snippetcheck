@@ -1,36 +1,39 @@
 import Mockup from "../components/Mockup";
 import ReportForm from "../components/ReportForm";
 
+// Every comment and code line below is real output from `snippetcheck check` run
+// against `ai@latest` — see packages/cli/test/fixtures/ai-sdk-verified.md for the
+// full verification record. Nothing here is hand-written diagnostic text.
 const FINDING_KINDS = [
   {
     title: "Removed Exports",
-    comment: "// TS2305: Module '\"pkg\"' has no exported member...",
-    code: 'import { Experimental_Agent } from "pkg";',
+    comment: "// TS2305: Module \"ai\" has no exported member 'AssistantResponse'.",
+    code: 'import { AssistantResponse } from "ai";',
   },
   {
     title: "Renamed Exports",
-    comment: "// TS2724: Did you mean 'NewName'?",
-    code: 'import { OldName } from "pkg";',
+    comment: "// TS2724: Did you mean 'ToolExecutionOptions'?",
+    code: 'import { ToolExecutionOption } from "ai";',
   },
   {
     title: "Removed Properties",
-    comment: "// TS2339: Property 'legacyMode' does not exist...",
-    code: "client.legacyMode = true;",
+    comment: "// TS2339: Property 'reasoningDetails' does not exist...",
+    code: "console.log(result.reasoningDetails);",
   },
   {
     title: "Renamed Properties",
-    comment: "// TS2551: Did you mean 'stopWhen'?",
-    code: "const result = { maxSteps: 5 };",
+    comment: "// TS2551: Did you mean 'pipeTextStreamToResponse'?",
+    code: "result.pipeDataStreamToResponse(res);",
   },
   {
     title: "Unknown Options",
-    comment: "// TS2353: Object literal may only specify known...",
-    code: "init({ unrecognisedFlag: true });",
+    comment: "// TS2353: Object literal may only specify known properties...",
+    code: 'embed({ model, value: "hello", unrecognizedFlag: true });',
   },
   {
     title: "Wrong Arity",
-    comment: "// TS2554: Expected 1 argument, but got 2.",
-    code: "client.connect(url, options);",
+    comment: "// TS2554: Expected 2 arguments, but got 3.",
+    code: "cosineSimilarity([1, 2], [3, 4], [5, 6]);",
   },
 ];
 
@@ -107,7 +110,7 @@ export default function Home() {
 
       <footer className="site-footer">
         <span>snippetcheck</span>
-        <a href="https://github.com/snippetcheck/snippetcheck">GitHub</a>
+        <a href="https://github.com/David19876543210/snippetcheck">GitHub</a>
       </footer>
     </div>
   );

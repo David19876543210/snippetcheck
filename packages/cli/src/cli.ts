@@ -15,7 +15,8 @@ Options:
                           @scope/pkg@next (required; version defaults to latest)
   --json                 Machine-readable output to stdout; human output suppressed
   --out <file>           Write the JSON report to a file
-  --max-snippets <n>     Cap on snippets checked (default 500)
+  --max-snippets <n>     Cap on snippets checked, sampled evenly across the document
+                          when exceeded (default 500)
   --include-js           Also check js/jsx blocks via checkJs (off by default)
   --include-historical   Also check migration/changelog/upgrade sections (off by default)
   --verbose              Show the skip reason for every skipped snippet

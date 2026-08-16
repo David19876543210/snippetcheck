@@ -104,8 +104,16 @@ export function checkSnippets(snippets: Snippet[], options: CheckOptions): Check
     }
 
     const semantic = program.getSemanticDiagnostics(sourceFile);
-    const hasUnresolvedImport = semantic.some((d) => d.code === UNRESOLVED_IMPORT_CODE);
-    if (hasUnresolvedImport) {
+    // Skip only when the TARGET package's own import can't resolve. A snippet that
+    // also imports some other, uninstalled third-party package still resolves that
+    // import to `any` under strict:false/noImplicitAny:false, which cannot itself
+    // produce a false diagnostic on a target-package symbol — so it's still checkable.
+    const unresolvedTargetImport = semantic.some((d) => {
+      if (d.code !== UNRESOLVED_IMPORT_CODE) return false;
+      const mod = parseUnresolvedModule(ts.flattenDiagnosticMessageText(d.messageText, " "));
+      return mod !== null && importMatchesPackage(mod, options.packageName);
+    });
+    if (unresolvedTargetImport) {
       skipped.push({ snippet, reason: "unresolved-import" });
       continue;
     }
@@ -154,7 +162,7 @@ function toFinding(
     symbol,
     code: diagnostic.code,
     message,
-    suggestion,
+    typescriptSuggestion: suggestion,
     source: snippet.source,
     line: snippet.line + lineIdx,
     column: character + 1,
@@ -241,11 +249,19 @@ function isFromTargetPackage(filePath: string, packageName: string): boolean {
   return normalized.includes(`node_modules/${packageName}/`);
 }
 
+function parseUnresolvedModule(message: string): string | null {
+  const m = /Cannot find module ['"](.+?)['"]/.exec(message);
+  return m ? m[1] : null;
+}
+
 function parseModuleNoExportedMember(
   message: string,
 ): { moduleSpecifier: string; symbol: string; suggestion: string | null } | null {
+  // TS2305's message is prefixed with "Module "; TS2724's is not ("'"ai"' has no
+  // exported member named 'X'. Did you mean 'Y'?"). Both wrap the module specifier
+  // the same way, so the prefix is the only thing that differs.
   const re =
-    /Module ['"]+(.+?)['"]+ has no exported member(?: named)? ['"](.+?)['"]\.(?:\s*Did you mean ['"](.+?)['"]\?)?/;
+    /(?:Module\s+)?['"]+(.+?)['"]+ has no exported member(?: named)? ['"](.+?)['"]\.(?:\s*Did you mean ['"](.+?)['"]\?)?/;
   const m = re.exec(message);
   if (!m) return null;
   return { moduleSpecifier: m[1], symbol: m[2], suggestion: m[3] ?? null };
