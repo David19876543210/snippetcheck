@@ -3,6 +3,16 @@ import assert from "node:assert/strict";
 import { renderHuman } from "../src/report.js";
 import type { CheckResult, Finding, SkippedSnippet, Snippet } from "../src/types.js";
 
+// picocolors decides whether to emit ANSI escapes based on the environment it runs
+// in (TTY, CI, FORCE_COLOR, etc.) — that differs between a local shell and a GitHub
+// Actions runner, so tests must not assume either way. Strip codes before asserting
+// on the visible text.
+// eslint-disable-next-line no-control-regex
+const ANSI_RE = /\x1B\[[0-9;]*m/g;
+function stripAnsi(s: string): string {
+  return s.replace(ANSI_RE, "");
+}
+
 function makeSnippet(overrides: Partial<Snippet> = {}): Snippet {
   return {
     id: "id",
@@ -58,7 +68,7 @@ describe("renderHuman: column widths never collapse to zero", () => {
     const result = makeResult({
       findings: [makeFinding({ line: 123456 })],
     });
-    const output = renderHuman(result);
+    const output = stripAnsi(renderHuman(result));
     assert.match(output, /L123456\s+removed-export\s+Foo/);
   });
 
@@ -67,7 +77,7 @@ describe("renderHuman: column widths never collapse to zero", () => {
       { snippet: makeSnippet({ line: 1 }), reason: "unsupported-language" },
     ];
     const result = makeResult({ skipped, snippetsFound: 1, snippetsChecked: 0 });
-    const output = renderHuman(result, { verbose: true });
+    const output = stripAnsi(renderHuman(result, { verbose: true }));
     // "unsupported-language" is exactly 20 characters — this is the exact bug that
     // shipped: padEnd(20) on a 20-char string adds zero separating space.
     assert.equal("unsupported-language".length, 20);
